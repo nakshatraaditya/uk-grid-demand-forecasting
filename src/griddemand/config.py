@@ -7,6 +7,10 @@ DATA_DIR = PROJECT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
 
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", f"sqlite:///{PROJECT_ROOT / 'mlflow.db'}")
+MLFLOW_EXPERIMENT = "grid-demand-forecast"
+MODEL_NAME = "griddemand-lgbm"
+
 
 NESO_API_BASE = "https://api.neso.energy/api/3/action"
 NESO_DEMAND_RESOURCE_ID = os.getenv(
