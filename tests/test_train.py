@@ -1,7 +1,6 @@
 from __future__ import annotations
 import numpy as np
 import pandas as pd
-import pytest
 from griddemand import config
 from griddemand.features.build import add_features
 from griddemand.models.train import run_training, three_way_split, train_and_evaluate

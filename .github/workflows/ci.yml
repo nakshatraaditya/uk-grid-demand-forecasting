@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check src tests scripts
+
+      - name: Test
+        run: python -m pytest -q
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Train + export synthetic champion
+        run: |
+          python scripts/ci_bootstrap_model.py
+          python scripts/export_model.py
+
+      - name: Build image
+        run: docker build -t grid-demand-api .
+
+      - name: Boot container and smoke-test endpoints
+        run: |
+          docker run -d -p 8000:8000 --name api grid-demand-api
+          # Wait for the app to come up (max ~30s).
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8000/health && break
+            sleep 1
+          done
+          # Health must report the model loaded.
+          curl -sf http://localhost:8000/health | grep -q '"model_loaded":true'
+          # A real prediction must come back with a plausible MW value.
+          curl -sf -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"rows":[{"lag_48":29500,"lag_96":30100,"lag_336":28800,"roll_mean_48":27400,"roll_max_48":33500,"roll_min_48":21800,"hour":18.0,"day_of_week":6,"is_weekend":1,"month":7,"hour_sin":-1.0,"hour_cos":0.0,"temperature_2m":19.0,"wind_speed_10m":14.0,"cloud_cover":45.0}]}' \
+            | grep -q 'predictions_mw'
+
+      - name: Container logs (always, for debugging)
+        if: always()
+        run: docker logs api || true
