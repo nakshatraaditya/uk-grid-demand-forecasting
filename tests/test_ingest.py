@@ -19,14 +19,11 @@ def make_neso_records(day: str, n_periods: int = 48) -> list[dict]:
 
 class TestDemandToFrame:
     def test_winter_day_period1_is_midnight_utc(self):
-        # January: UK local time == UTC, so period 1 starts 00:00 UTC.
         df = demand_to_frame(make_neso_records("2026-01-15"))
         assert df.ts_utc.iloc[0] == pd.Timestamp("2026-01-15 00:00", tz="UTC")
         assert len(df) == 48
 
     def test_summer_day_period1_is_2300_utc_previous_day(self):
-        # July: UK is on BST (UTC+1). Local midnight = 23:00 UTC the day before.
-        # This is THE classic timezone bug in UK energy data — the test pins it.
         df = demand_to_frame(make_neso_records("2026-07-15"))
         assert df.ts_utc.iloc[0] == pd.Timestamp("2026-07-14 23:00", tz="UTC")
 
@@ -36,11 +33,8 @@ class TestDemandToFrame:
         assert list(deltas) == [pd.Timedelta(minutes=30)]
 
     def test_short_dst_day_has_46_periods(self):
-        # Clocks go forward 29 Mar 2026: the day has 23 hours = 46 periods.
         df = demand_to_frame(make_neso_records("2026-03-29", n_periods=46))
         assert len(df) == 46
-        # Period 46 starts at UTC midnight + 45*30min = 22:30 UTC and ends at
-        # 23:00 UTC — which IS the next local midnight (00:00 BST, 30 Mar).
         assert df.ts_utc.iloc[-1] == pd.Timestamp("2026-03-29 22:30", tz="UTC")
 
     def test_deduplicates_and_sorts(self):
@@ -52,6 +46,16 @@ class TestDemandToFrame:
     def test_empty_records_raise(self):
         with pytest.raises(ValueError):
             demand_to_frame([])
+    
+    def test_parses_legacy_date_format(self):
+        records = [
+            {"SETTLEMENT_DATE": "01-JAN-2022", "SETTLEMENT_PERIOD": p,
+             "ND": 25000 + p, "TSD": 26000 + p}
+            for p in range(1, 49)
+        ]
+        df = demand_to_frame(records)
+        assert len(df) == 48
+        assert df.ts_utc.iloc[0] == pd.Timestamp("2022-01-01 00:00", tz="UTC")
 
     def test_drops_placeholder_zero_demand_rows(self):
         records = make_neso_records("2026-01-15")

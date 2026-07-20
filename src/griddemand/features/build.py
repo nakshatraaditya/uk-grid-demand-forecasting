@@ -29,6 +29,13 @@ def load_joined() -> pd.DataFrame:
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
+    full_grid = pd.date_range(df.ts_utc.min(), df.ts_utc.max(), freq="30min", tz="UTC")
+    df = (
+        df.set_index("ts_utc")
+        .reindex(full_grid)
+        .rename_axis("ts_utc")
+        .reset_index()
+    )
 
     for lag in (48, 96, 336):  # yesterday, 2 days ago, last week
         df[f"lag_{lag}"] = df[TARGET].shift(lag)

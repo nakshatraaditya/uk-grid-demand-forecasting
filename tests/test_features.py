@@ -33,6 +33,18 @@ class TestLeakage:
                 cutoff = t - pd.Timedelta(minutes=30 * HORIZON)
                 past = raw.loc[:cutoff]
                 assert df[col].iloc[i] <= past.max() + 1e-6, f"{col} leaks future data"
+    
+    def test_lags_stay_time_correct_across_data_gaps(self):
+        df = synthetic_frame(days=21)
+        gap_start = pd.Timestamp("2026-01-08", tz="UTC")
+        gap_end = pd.Timestamp("2026-01-11", tz="UTC")
+        gapped = df[(df.ts_utc < gap_start) | (df.ts_utc >= gap_end)]
+
+        out = add_features(gapped)
+        raw = df.set_index("ts_utc")[TARGET]
+        t = pd.Timestamp("2026-01-19 12:00", tz="UTC")
+        row = out[out.ts_utc == t]
+        assert row.lag_48.iloc[0] == pytest.approx(raw.loc[t - pd.Timedelta(days=1)])
 
     def test_lag_48_is_exactly_yesterday_same_period(self):
         df = add_features(synthetic_frame())

@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 def fetch_city_weather(
     city: str, start: date, end: date, endpoint: str = "archive"
 ) -> pd.DataFrame:
-    """Fetch hourly weather for one city. Returns ts_utc + weather columns."""
     meta = config.UK_CITIES[city]
     url = (
         config.OPEN_METEO_ARCHIVE_URL
@@ -48,16 +47,14 @@ def weighted_national_weather(city_frames: list[pd.DataFrame]) -> pd.DataFrame:
     return national.sort_values("ts_utc").reset_index(drop=True)
 
 
-def ingest_weather(start: date, end: date, endpoint: str = "archive") -> pd.DataFrame:
-    """Fetch all cities, aggregate, persist, return the national frame."""
+def fetch_national_weather(start: date, end: date, endpoint: str = "archive") -> pd.DataFrame:
     frames = [fetch_city_weather(c, start, end, endpoint) for c in config.UK_CITIES]
-    national = weighted_national_weather(frames)
+    return weighted_national_weather(frames)
 
-    config.RAW_DIR.mkdir(parents=True, exist_ok=True)
-    pd.concat(frames, ignore_index=True).to_parquet(
-        config.RAW_DIR / f"weather_cities_{start.isoformat()}_{end.isoformat()}.parquet",
-        index=False,
-    )
+
+def ingest_weather(start: date, end: date, endpoint: str = "archive") -> pd.DataFrame:
+    national = fetch_national_weather(start, end, endpoint)
+
     config.PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     out_path = config.PROCESSED_DIR / "weather.parquet"
     national.to_parquet(out_path, index=False)

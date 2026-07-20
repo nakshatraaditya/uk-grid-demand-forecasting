@@ -8,10 +8,37 @@ from griddemand.http import get_json
 logger = logging.getLogger(__name__)
 MIN_PLAUSIBLE_ND_MW = 5000
 
-def fetch_demand_raw(start: date, end: date) -> list[dict]:
+def discover_demand_resource(year: int) -> str:
+    payload = get_json(
+        f"{config.NESO_API_BASE}/package_show",
+        params={"id": "historic-demand-data"},
+    )
+    if not payload.get("success"):
+        raise RuntimeError(f"Could not read historic-demand-data dataset: {payload}")
+    wanted = f"historic demand data {year}"
+    for resource in payload["result"]["resources"]:
+        if resource.get("name", "").strip().lower() == wanted:
+            logger.info("Year %d -> resource %s", year, resource["id"])
+            return resource["id"]
+    raise RuntimeError(f"No 'Historic Demand Data {year}' resource in historic-demand-data")
+
+def fetch_demand_year(resource_id: str) -> list[dict]:
     sql = (
         f'SELECT "SETTLEMENT_DATE", "SETTLEMENT_PERIOD", "ND", "TSD" '
-        f'FROM "{config.NESO_DEMAND_RESOURCE_ID}" '
+        f'FROM "{resource_id}"'
+    )
+    payload = get_json(f"{config.NESO_API_BASE}/datastore_search_sql", params={"sql": sql})
+    if not payload.get("success"):
+        raise RuntimeError(f"NESO API returned success=false: {payload}")
+    records = payload["result"]["records"]
+    logger.info("Fetched %d demand rows from resource %s", len(records), resource_id)
+    return records
+
+def fetch_demand_raw(start: date, end: date, resource_id: str | None = None) -> list[dict]:
+    resource_id = resource_id or config.NESO_DEMAND_RESOURCE_ID
+    sql = (
+        f'SELECT "SETTLEMENT_DATE", "SETTLEMENT_PERIOD", "ND", "TSD" '
+        f'FROM "{resource_id}" '
         f"WHERE \"SETTLEMENT_DATE\" >= '{start.isoformat()}' "
         f"AND \"SETTLEMENT_DATE\" <= '{end.isoformat()}' "
         f'ORDER BY "SETTLEMENT_DATE", "SETTLEMENT_PERIOD"'
