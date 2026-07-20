@@ -11,3 +11,4 @@ mlruns/
 .coverage
 .env
 model_export/
+monitoring_reports/
