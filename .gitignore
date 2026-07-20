@@ -10,3 +10,4 @@ mlruns/
 .ruff_cache/
 .coverage
 .env
+model_export/
