@@ -34,7 +34,11 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+@app.get("/", include_in_schema=False)
+def root():
+    from fastapi.responses import RedirectResponse
 
+    return RedirectResponse(url="/docs")
 
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
