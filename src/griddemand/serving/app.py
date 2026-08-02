@@ -3,6 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import PlainTextResponse
 from griddemand import config
 from griddemand.features.build import FEATURE_COLS
 from griddemand.models.registry import champion_version, load_champion
@@ -34,22 +35,16 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+
 @app.get("/", include_in_schema=False)
 def root():
     from fastapi.responses import RedirectResponse
 
     return RedirectResponse(url="/docs")
 
-@app.get("/health", response_model=HealthResponse)
-def health() -> HealthResponse:
-    return HealthResponse(
-        status="ok" if app.state.model is not None else "degraded",
-        model_loaded=app.state.model is not None,
-    )
 
-
-@app.post("/predict", response_model=PredictResponse)
-def predict(request: PredictRequest) -> PredictResponse:
+def _run_prediction(request: PredictRequest) -> PredictResponse:
     if app.state.model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
 
@@ -62,3 +57,29 @@ def predict(request: PredictRequest) -> PredictResponse:
         model_name=config.MODEL_NAME,
         model_version=str(app.state.model_version),
     )
+
+
+@app.get("/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    return HealthResponse(
+        status="ok" if app.state.model is not None else "degraded",
+        model_loaded=app.state.model is not None,
+    )
+
+
+@app.post("/predict", response_model=PredictResponse)
+def predict(request: PredictRequest) -> PredictResponse:
+    return _run_prediction(request)
+
+
+# --- SageMaker container contract: GET /ping (200) + POST /invocations -------
+@app.get("/ping", include_in_schema=False)
+def ping():
+    if app.state.model is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+    return PlainTextResponse("", status_code=200)
+
+
+@app.post("/invocations", response_model=PredictResponse, include_in_schema=False)
+def invocations(request: PredictRequest) -> PredictResponse:
+    return _run_prediction(request)

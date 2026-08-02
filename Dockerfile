@@ -5,22 +5,24 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# Layer 1 (slow, cached): dependencies only.
 COPY pyproject.toml ./
 COPY src ./src
 RUN pip install --no-cache-dir .
 
-# Layer 2 (fast): the exported model. Rebuilding with a new model reuses
 COPY model_export /app/model
 ENV GRIDDEMAND_MODEL_PATH=/app/model
 
-# Never run as root inside containers(remember that)
+COPY serve_entrypoint.sh /app/serve_entrypoint.sh
+RUN chmod +x /app/serve_entrypoint.sh
+
 RUN useradd --create-home appuser
 USER appuser
 
-EXPOSE 8000
+ENV PORT=8080
+EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
-    CMD curl -sf http://localhost:8000/health || exit 1
+    CMD curl -sf http://localhost:${PORT}/ping || exit 1
 
-CMD ["uvicorn", "griddemand.serving.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# ENTRYPOINT ignores the `serve` arg SageMaker appends and always runs uvicorn.
+ENTRYPOINT ["/app/serve_entrypoint.sh"]
