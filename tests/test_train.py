@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import numpy as np
 import pandas as pd
+
 from griddemand import config
 from griddemand.features.build import add_features
 from griddemand.models.train import run_training, three_way_split, train_and_evaluate
@@ -43,7 +45,7 @@ class TestSplit:
 
 class TestTraining:
     def test_train_produces_finite_metrics(self):
-        model, metrics, test = train_and_evaluate(
+        _, metrics, test = train_and_evaluate(
             synthetic_features(), FAST_PARAMS, num_boost_round=50, early_stopping_rounds=10
         )
         assert np.isfinite(metrics["model_mape_pct"])

@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 import logging
 import time
+
 import requests
+
 from griddemand import config
 
 logger = logging.getLogger(__name__)

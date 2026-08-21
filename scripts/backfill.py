@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import argparse
 import logging
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
+
 from griddemand import config
 from griddemand.ingest.neso import demand_to_frame, discover_demand_resource, fetch_demand_year
 from griddemand.ingest.store import upsert_parquet
@@ -20,7 +22,7 @@ def backfill_year(year: int) -> None:
     upsert_parquet(demand, config.PROCESSED_DIR / "demand.parquet")
 
     # Archive endpoint can't serve the future (or the last ~week).
-    weather_end = min(end, date.today() - timedelta(days=7))
+    weather_end = min(end, datetime.now(timezone.utc).date() - timedelta(days=7))
     n_weather = 0
     if weather_end >= start:
         weather = fetch_national_weather(start, weather_end, endpoint="archive")

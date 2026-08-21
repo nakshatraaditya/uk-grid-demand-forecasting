@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import argparse
 import logging
-from datetime import date, timedelta
+from datetime import datetime, timedelta, timezone
+
 from griddemand.ingest.neso import ingest_demand
 from griddemand.ingest.weather import ingest_weather
 
@@ -12,7 +14,7 @@ def main() -> None:
     parser.add_argument("--days", type=int, default=90, help="Days of history to pull")
     args = parser.parse_args()
 
-    end = date.today() - timedelta(days=1)  # yesterday: today's data is incomplete
+    end = datetime.now(timezone.utc).date() - timedelta(days=1)  # yesterday: today's data is incomplete
     start = end - timedelta(days=args.days)
 
     demand = ingest_demand(start, end)

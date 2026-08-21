@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import json
 import logging
+
 import pandas as pd
 from evidently import Report
 from evidently.presets import DataDriftPreset
+
 from griddemand.features.build import FEATURE_COLS, TARGET
 from griddemand.models.baseline import evaluate
 

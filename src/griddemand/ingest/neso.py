@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 import logging
 from datetime import date
+
 import pandas as pd
+
 from griddemand import config
 from griddemand.http import get_json
 
@@ -51,6 +54,20 @@ def fetch_demand_raw(start: date, end: date, resource_id: str | None = None) -> 
     return records
 
 
+def _parse_settlement_date(values: pd.Series) -> pd.Series:
+    """NESO mixes ISO dates with a legacy '01-JAN-2022' style across resources."""
+    parsed = pd.to_datetime(values, format="ISO8601", errors="coerce")
+    unparsed = parsed.isna()
+    if unparsed.any():
+        parsed[unparsed] = pd.to_datetime(
+            values[unparsed], format="%d-%b-%Y", errors="coerce"
+        )
+    if parsed.isna().any():
+        bad = values[parsed.isna()].unique()[:5]
+        raise ValueError(f"Unrecognised SETTLEMENT_DATE format(s): {list(bad)}")
+    return parsed
+
+
 def demand_to_frame(records: list[dict]) -> pd.DataFrame:
     if not records:
         raise ValueError("No demand records to process")
@@ -58,7 +75,7 @@ def demand_to_frame(records: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(records)
     df.columns = [c.lower() for c in df.columns]
 
-    df["settlement_date"] = pd.to_datetime(df["settlement_date"]).dt.tz_localize(None)
+    df["settlement_date"] = _parse_settlement_date(df["settlement_date"]).dt.tz_localize(None)
     df["settlement_period"] = df["settlement_period"].astype(int)
     df["nd_mw"] = pd.to_numeric(df["nd"], errors="coerce")
     df["tsd_mw"] = pd.to_numeric(df["tsd"], errors="coerce")

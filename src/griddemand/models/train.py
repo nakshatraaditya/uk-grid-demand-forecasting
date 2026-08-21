@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 import logging
+
 import lightgbm as lgb
 import mlflow
 import pandas as pd
+
 from griddemand import config
 from griddemand.features.build import FEATURE_COLS, TARGET
 from griddemand.models.baseline import chronological_split, evaluate
@@ -67,7 +70,7 @@ def run_training(df: pd.DataFrame, params: dict | None = None) -> dict:
     mlflow.set_experiment(config.MLFLOW_EXPERIMENT)
 
     with mlflow.start_run() as run:
-        model, metrics, test = train_and_evaluate(df, params)
+        model, metrics, _ = train_and_evaluate(df, params)
 
         mlflow.log_params({**DEFAULT_PARAMS, **(params or {})})
         mlflow.log_param("n_rows", len(df))

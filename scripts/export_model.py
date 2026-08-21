@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 import shutil
 from pathlib import Path
+
 import mlflow
+
 from griddemand.models.registry import champion_version, load_champion
 
 EXPORT_DIR = Path("model_export")

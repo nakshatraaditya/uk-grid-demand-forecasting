@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 import logging
+
 import numpy as np
 import pandas as pd
+
 from griddemand import config
 
 logger = logging.getLogger(__name__)

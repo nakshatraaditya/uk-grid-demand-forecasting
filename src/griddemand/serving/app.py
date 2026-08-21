@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import logging
 from contextlib import asynccontextmanager
+
 import pandas as pd
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
+
 from griddemand import config
 from griddemand.features.build import FEATURE_COLS
 from griddemand.models.registry import champion_version, load_champion
@@ -39,8 +42,6 @@ app = FastAPI(
 
 @app.get("/", include_in_schema=False)
 def root():
-    from fastapi.responses import RedirectResponse
-
     return RedirectResponse(url="/docs")
 
 

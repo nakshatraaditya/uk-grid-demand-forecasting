@@ -1,8 +1,11 @@
 from __future__ import annotations
+
 import os
 from pathlib import Path
+
 import lightgbm as lgb
 import mlflow
+
 from griddemand import config
 
 MODEL_PATH_ENV = "GRIDDEMAND_MODEL_PATH"

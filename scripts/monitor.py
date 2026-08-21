@@ -1,10 +1,13 @@
 from __future__ import annotations
+
 import argparse
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
+
 import mlflow
 import pandas as pd
+
 from griddemand import config
 from griddemand.models.registry import champion_version, load_champion
 from griddemand.models.train import run_training

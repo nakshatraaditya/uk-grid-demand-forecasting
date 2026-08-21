@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import numpy as np
 import pandas as pd
+
 from griddemand.features.build import TARGET
 
 
@@ -12,7 +14,7 @@ def evaluate(y_true: pd.Series, y_pred: pd.Series) -> dict[str, float]:
     return {
         "mae_mw": float(np.mean(np.abs(y - yhat))),
         "mape_pct": float(np.mean(np.abs((y - yhat) / y)) * 100),
-        "n": int(len(y)),
+        "n": len(y),
     }
 
 

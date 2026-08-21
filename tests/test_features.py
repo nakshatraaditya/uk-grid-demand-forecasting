@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 import pytest
+
 from griddemand.features.build import HORIZON, TARGET, add_features
 from griddemand.models.baseline import chronological_split, evaluate, seasonal_naive_report
 

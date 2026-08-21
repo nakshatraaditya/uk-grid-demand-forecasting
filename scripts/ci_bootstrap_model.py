@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import numpy as np
 import pandas as pd
+
 from griddemand.features.build import add_features
 from griddemand.models.train import run_training
 

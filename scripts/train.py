@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 import logging
+
 import pandas as pd
+
 from griddemand import config
 from griddemand.models.train import run_training
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import logging
+
 from griddemand.features.build import build
 from griddemand.models.baseline import seasonal_naive_report
 

@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import pandas as pd
 import pytest
+
 from griddemand.ingest.neso import demand_to_frame
 from griddemand.ingest.weather import weighted_national_weather
 
@@ -56,6 +58,13 @@ class TestDemandToFrame:
         df = demand_to_frame(records)
         assert len(df) == 48
         assert df.ts_utc.iloc[0] == pd.Timestamp("2022-01-01 00:00", tz="UTC")
+
+    def test_rejects_unparseable_dates(self):
+        records = [
+            {"SETTLEMENT_DATE": "not-a-date", "SETTLEMENT_PERIOD": 1, "ND": 25000, "TSD": 26000}
+        ]
+        with pytest.raises(ValueError, match="Unrecognised SETTLEMENT_DATE"):
+            demand_to_frame(records)
 
     def test_drops_placeholder_zero_demand_rows(self):
         records = make_neso_records("2026-01-15")

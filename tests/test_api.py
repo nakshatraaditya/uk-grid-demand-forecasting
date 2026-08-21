@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
+
 from griddemand import config
 from griddemand.features.build import add_features
 from griddemand.models.train import run_training

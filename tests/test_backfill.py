@@ -1,11 +1,16 @@
 from __future__ import annotations
+
+from typing import ClassVar
+
 import pandas as pd
 import pytest
+
 from griddemand.ingest import neso
 from griddemand.ingest.store import upsert_parquet
 
+
 class TestDiscovery:
-    PAYLOAD = {
+    PAYLOAD: ClassVar[dict] = {
         "success": True,
         "result": {
             "resources": [

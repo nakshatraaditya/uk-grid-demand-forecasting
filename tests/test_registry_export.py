@@ -1,8 +1,10 @@
 from __future__ import annotations
+
+import mlflow
 import numpy as np
 import pandas as pd
-import mlflow
 import pytest
+
 from griddemand import config
 from griddemand.features.build import FEATURE_COLS, add_features
 from griddemand.models.train import run_training

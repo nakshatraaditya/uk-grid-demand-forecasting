@@ -49,10 +49,14 @@ jobs:
 
       - name: Boot container and smoke-test endpoints
         run: |
-          docker run -d -p 8000:8000 --name api grid-demand-api
-          # Wait for the app to come up (max ~30s).
+          docker run -d -p 8000:8080 --name api grid-demand-api
+          # The image serves on $PORT (8080); wait for it to come up.
           for i in $(seq 1 30); do
-            curl -sf http://localhost:8000/health && break
+            curl -sf http://localhost:8000/health >/dev/null && break
+            if [ "$i" -eq 30 ]; then
+              echo "API did not become healthy within 30s"
+              exit 1
+            fi
             sleep 1
           done
           # Health must report the model loaded.
