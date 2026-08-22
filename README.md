@@ -1,6 +1,6 @@
 # UK Grid Demand Forecasting — End-to-End MLOps
 
-![CI](https://github.com/nakshatraaditya/grid-demand-forecast/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/nakshatraaditya/uk-grid-demand-forecasting/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 
 **🔴 Live API (Google Cloud Run):** https://grid-demand-api-359251346586.europe-west2.run.app/docs
