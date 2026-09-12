@@ -5,7 +5,7 @@
 
 **🔴 Live API (Google Cloud Run):** https://grid-demand-api-359251346586.europe-west2.run.app/docs
 &nbsp;·&nbsp; try `/health` for status, `/docs` for the interactive UI.
-*(Scales to zero, so the first request after idle takes ~10–15s to wake.)*
+*(Scales to zero, so the first request after idle takes ~10–15s to wake; warm p50 latency is ~30 ms — an intentional cost trade for a day-ahead workload that runs a few times per hour.)*
 
 A production-style machine learning system that forecasts UK national electricity
 demand (half-hourly, day-ahead) and keeps itself healthy: it ingests live grid and
@@ -91,6 +91,28 @@ flowchart LR
 - **Idempotent, resilient ingestion.** Retries with backoff, physical-plausibility
   validation, metadata-driven resource discovery, timestamp upserts safe to re-run.
 
+## Why LightGBM (and not Prophet, N-BEATS, or a TFT)
+
+Half-hourly UK demand is dominated by strong daily and weekly seasonality,
+public-holiday effects, and weather — patterns a well-featured gradient-booster
+captures cheaply and interpretably.
+
+- **Prophet** handles seasonality out of the box but is univariate on regressors
+  and slow to iterate on; adding weather + calendar interactions is awkward.
+- **N-BEATS / TFT** are strong on longer horizons and irregular series, but at
+  79k half-hourly rows and a single national target the extra capacity buys
+  little accuracy for a lot of training cost, tuning surface, and inference
+  latency — and cold-starting a PyTorch model on Cloud Run's 2 GB tier is
+  painful.
+- **LightGBM** trains in seconds on this dataset, early-stops cleanly, exposes
+  feature importances the baseline gate can be argued against, and serves in
+  milliseconds from a small container. It's the honest pick for the horizon,
+  data size, and deployment envelope this project actually operates in.
+
+The quality gate is deliberately model-agnostic: swapping LightGBM for a
+neural forecaster is a `models/train.py` change, and the champion is whichever
+candidate beats the seasonal-naive baseline on the same holdout.
+
 ## Results
 
 | Model | MAPE | MAE (MW) | Test window |
@@ -149,6 +171,19 @@ Dockerfile
 - **Open-Meteo** — hourly weather for 5 UK metros, population-weighted to a national series
 
 ---
+
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
+
+## Further reading in this repo
+
+- [`docs/monitoring.md`](./docs/monitoring.md) — what the drift/performance reports contain and the exact retrain rules
+- [`deploy/deploy_cloud_run.sh`](./deploy/deploy_cloud_run.sh) — one-shot build + push + deploy to Cloud Run
+- [`deploy/terraform/`](./deploy/terraform/) — same deployment as a reproducible Terraform module
+- [`deploy/deploy_sagemaker.sh`](./deploy/deploy_sagemaker.sh) — the AWS SageMaker serverless path
+
 
 *Built as a hands-on study of production ML engineering: MLOps, containerization,
 CI/CD, cloud deployment, and model monitoring.*

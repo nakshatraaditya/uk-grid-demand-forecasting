@@ -1,0 +1,86 @@
+# Monitoring: drift, performance, and the retrain decision
+
+`scripts/monitor.py` runs the champion against the latest observed data and
+writes an Evidently report plus a JSON verdict to `monitoring_reports/`
+(gitignored — the folder is generated per-run).
+
+This doc explains what the reports contain and the exact rules that decide
+whether to retrain. It stands in for a committed sample report while the
+production monitor is generating fresh ones.
+
+## Two independent signals
+
+**1. Data drift** — a per-feature statistical test on the current batch vs the
+reference training window, using Evidently's `DataDriftPreset`. Categorical
+columns use chi-square; numeric use Kolmogorov-Smirnov / Wasserstein depending
+on distribution. A column is "drifted" when its p-value drops below the preset
+threshold (or Wasserstein distance exceeds it).
+
+**2. Performance degradation** — the champion is scored on the current window
+and its MAPE is compared to the MAPE recorded when it was promoted.
+
+## Retrain rules (from `src/griddemand/monitoring/drift.py`)
+
+Both are OR'd — either fires a retrain:
+
+| Signal | Threshold | Constant |
+|---|---|---|
+| Drift share | `n_drifted / n_features > 30%` | `DRIFT_SHARE_THRESHOLD = 0.30` |
+| Performance | `current_mape > 1.25 × promoted_mape` | `DEGRADATION_FACTOR = 1.25` |
+
+Concretely, with the current champion at 4.89% MAPE, retraining fires when
+live MAPE crosses **~6.11%**, or when more than 30% of the feature set has
+statistically drifted from the training distribution.
+
+## What a report looks like
+
+The Evidently HTML report shows, per feature:
+
+- Reference vs current distribution (histogram / density)
+- Test used, its statistic and p-value
+- The drifted / not-drifted verdict
+- A dataset-level "drift share" tile
+
+The JSON verdict alongside it looks like:
+
+```json
+{
+  "drift": {
+    "n_drifted": 4,
+    "drift_share": 0.19,
+    "columns": {
+      "temperature_2m": {"value": 0.02, "method": "ks_p_value", "drifted": true},
+      "lag_48":         {"value": 0.41, "method": "ks_p_value", "drifted": false}
+    }
+  },
+  "performance": {
+    "current_mape_pct": 5.12,
+    "current_mae_mw": 1284,
+    "champion_test_mape_pct": 4.89,
+    "degraded": false
+  },
+  "should_retrain": false,
+  "reasons": []
+}
+```
+
+## Reproducing a report
+
+```bash
+python scripts/ingest.py --days 60      # fresh data window
+python scripts/monitor.py               # writes report + verdict, exits non-zero if retrain needed
+python scripts/monitor.py --retrain     # act on the verdict (re-runs training pipeline)
+```
+
+Output lands in `monitoring_reports/<UTC-timestamp>/`:
+
+- `drift_report.html` — Evidently rendered report
+- `verdict.json` — the JSON above, machine-readable
+
+## Ops integration
+
+In production the monitor runs on a Cloud Scheduler cron. The exit code is
+the signal: `0` = healthy, non-zero = retrain triggered. The retraining job
+re-uses the same training pipeline (`scripts/train.py`) and its own quality
+gate — a retrain that fails to beat the seasonal-naive baseline does not
+overwrite the champion.
