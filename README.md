@@ -148,6 +148,19 @@ python scripts/monitor.py              # drift + performance report; retrain ver
 python scripts/monitor.py --retrain    # act on the verdict
 ```
 
+### Feature snapshots
+
+```python
+from griddemand.features.build import build
+from griddemand.features import store
+
+df = build()                     # (re)compute the feature table
+v  = store.write(df)             # content-hashed Parquet snapshot + manifest row
+latest = store.read("latest")    # reload the most recent snapshot
+print(v.version, v.rows, v.git_sha)
+```
+
+
 ## Project layout
 
 ```
@@ -180,6 +193,8 @@ MIT — see [LICENSE](./LICENSE).
 ## Further reading in this repo
 
 - [`docs/monitoring.md`](./docs/monitoring.md) — what the drift/performance reports contain and the exact retrain rules
+- [`docs/monitoring/example_2026-09-13/`](./docs/monitoring/example_2026-09-13/) — a real Evidently drift report + JSON verdict from a real run of the monitor
+- [`src/griddemand/features/store.py`](./src/griddemand/features/store.py) — minimal offline feature store (content-hashed Parquet snapshots + a JSONL manifest) and why Feast is overkill here
 - [`deploy/deploy_cloud_run.sh`](./deploy/deploy_cloud_run.sh) — one-shot build + push + deploy to Cloud Run
 - [`deploy/terraform/`](./deploy/terraform/) — same deployment as a reproducible Terraform module
 - [`deploy/deploy_sagemaker.sh`](./deploy/deploy_sagemaker.sh) — the AWS SageMaker serverless path
