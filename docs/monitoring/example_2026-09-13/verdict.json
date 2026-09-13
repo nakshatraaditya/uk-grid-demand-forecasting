@@ -1,0 +1,103 @@
+{
+  "generated_at_utc": "2026-09-13T02:19:47Z",
+  "window": {
+    "reference": "2026-04-01 \u2192 2026-06-30 (13 weeks)",
+    "current": "2026-08-01 \u2192 2026-09-12 (6 weeks)"
+  },
+  "drift": {
+    "columns": {
+      "lag_48": {
+        "value": 0.0133,
+        "method": "Wasserstein distance (normed)",
+        "drifted": false
+      },
+      "lag_96": {
+        "value": 0.0136,
+        "method": "Wasserstein distance (normed)",
+        "drifted": false
+      },
+      "lag_336": {
+        "value": 0.012,
+        "method": "Wasserstein distance (normed)",
+        "drifted": false
+      },
+      "roll_mean_48": {
+        "value": 0.0457,
+        "method": "Wasserstein distance (normed)",
+        "drifted": false
+      },
+      "roll_max_48": {
+        "value": 0.0855,
+        "method": "Wasserstein distance (normed)",
+        "drifted": false
+      },
+      "roll_min_48": {
+        "value": 0.1377,
+        "method": "Wasserstein distance (normed)",
+        "drifted": true
+      },
+      "hour": {
+        "value": 0.0,
+        "method": "Wasserstein distance (normed)",
+        "drifted": false
+      },
+      "hour_sin": {
+        "value": 0.0,
+        "method": "Wasserstein distance (normed)",
+        "drifted": false
+      },
+      "hour_cos": {
+        "value": 0.0,
+        "method": "Wasserstein distance (normed)",
+        "drifted": false
+      },
+      "temperature_2m": {
+        "value": 2.4393,
+        "method": "Wasserstein distance (normed)",
+        "drifted": true
+      },
+      "wind_speed_10m": {
+        "value": 0.4576,
+        "method": "Wasserstein distance (normed)",
+        "drifted": true
+      },
+      "cloud_cover": {
+        "value": 0.6305,
+        "method": "Wasserstein distance (normed)",
+        "drifted": true
+      },
+      "nd_mw": {
+        "value": 0.0124,
+        "method": "Wasserstein distance (normed)",
+        "drifted": false
+      },
+      "day_of_week": {
+        "value": 0.0,
+        "method": "Jensen-Shannon distance",
+        "drifted": false
+      },
+      "is_weekend": {
+        "value": 0.0,
+        "method": "Jensen-Shannon distance",
+        "drifted": false
+      },
+      "month": {
+        "value": 0.8326,
+        "method": "Jensen-Shannon distance",
+        "drifted": true
+      }
+    },
+    "n_drifted": 5,
+    "drift_share": 0.3125
+  },
+  "performance": {
+    "current_mape_pct": 5.24,
+    "current_mae_mw": 1298,
+    "champion_test_mape_pct": 4.89,
+    "degraded": false
+  },
+  "should_retrain": true,
+  "reasons": [
+    "data drift: 5 features drifted (share 31% > 30%)"
+  ]
+}
