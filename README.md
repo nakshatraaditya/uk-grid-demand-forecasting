@@ -72,7 +72,7 @@ flowchart LR
 | CI/CD | GitHub Actions (lint → test → build → container smoke test) |
 | Deployment | Google Cloud Run (serverless, scale-to-zero) |
 | Monitoring | Evidently (data drift + performance degradation) |
-| Quality | pytest (43 tests, fully offline), ruff |
+| Quality | pytest (53 tests, fully offline), ruff |
 
 ## Key engineering decisions
 
@@ -125,7 +125,7 @@ candidate beats the seasonal-naive baseline on the same holdout.
 ```bash
 python3.12 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest -q                                             # 43 tests, offline
+pytest -q                                             # 53 tests, offline
 
 python scripts/backfill.py --years 2022 2023 2024 2025 2026
 python scripts/build_features.py
@@ -173,7 +173,7 @@ src/griddemand/
 ├── serving/             # FastAPI app + Pydantic schemas
 └── monitoring/          # Evidently drift + retrain decision
 scripts/                 # thin CLI entry points
-tests/                   # 43 offline, fixture-based tests
+tests/                   # 53 offline, fixture-based tests
 .github/workflows/ci.yml # lint · test · docker build · container smoke test
 Dockerfile
 ```
